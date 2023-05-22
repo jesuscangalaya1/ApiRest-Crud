@@ -3,6 +3,7 @@ package com.crud.mapper;
 import com.crud.dtos.request.CategoryRequest;
 import com.crud.dtos.response.CategoryResponse;
 import com.crud.entities.CategoryEntity;
+import org.mapstruct.InheritInverseConfiguration;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;

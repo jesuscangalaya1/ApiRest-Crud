@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.Where;
 
 import javax.persistence.*;
 
@@ -12,6 +14,8 @@ import javax.persistence.*;
 @Getter @Setter
 @Entity
 @Table(name = "Producto")
+@Where(clause = "deleted = false")
+@SQLDelete(sql = "UPDATE Producto SET deleted = true WHERE id=?")
 public class ProductEntity {
 
     @Id
@@ -24,6 +28,9 @@ public class ProductEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
     private CategoryEntity category;
+
+    @Column(columnDefinition = "BOOLEAN NOT NULL DEFAULT '0'")
+    private boolean deleted;
 
 
 }
