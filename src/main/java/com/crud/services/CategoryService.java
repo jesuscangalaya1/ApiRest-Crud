@@ -9,7 +9,7 @@ import java.util.Optional;
 public interface CategoryService {
 
     List<CategoryResponse> listCategories();
-    Optional<CategoryResponse> getCategoryById(Long id);
+    CategoryResponse getCategoryById(Long id);
     CategoryResponse createCategory(CategoryRequest categoryRequest);
     CategoryResponse updateCategory(Long id, CategoryRequest categoryRequest);
     void deleteCategory(Long id);

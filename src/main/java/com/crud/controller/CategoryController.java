@@ -1,15 +1,23 @@
 package com.crud.controller;
 
+import com.crud.config.hateoas.CategoryHateoasConfig;
 import com.crud.dtos.request.CategoryRequest;
 import com.crud.dtos.response.CategoryResponse;
+import com.crud.dtos.response.ProductResponse;
 import com.crud.dtos.response.RestResponse;
 import com.crud.services.CategoryService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.hateoas.CollectionModel;
+
 
 import java.util.List;
 import java.util.Optional;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @RestController
 @RequiredArgsConstructor
@@ -17,21 +25,27 @@ import java.util.Optional;
 public class CategoryController {
 
     private final CategoryService categoryService;
+    private final CategoryHateoasConfig categoryHateoasConfig;
 
     @GetMapping
-    public RestResponse<List<CategoryResponse>> listCategories() {
+    public RestResponse<CollectionModel<EntityModel<CategoryResponse>>> listCategories() {
+        List<EntityModel<CategoryResponse>> categoryModels = categoryService.listCategories().stream()
+                .map(categoryHateoasConfig::toModel).toList();
+
+        CollectionModel<EntityModel<CategoryResponse>> collectionModel = CollectionModel.of(categoryModels)
+                .add(linkTo(methodOn(CategoryController.class).listCategories()).withSelfRel());
+
         return new RestResponse<>("SUCCESS",
                 String.valueOf(HttpStatus.OK),
-                "CATEGORIES SUCCESSFULLY READED",
-                categoryService.listCategories());
+                "CATEGORIES SUCCESSFULLY READED", collectionModel);
     }
 
     @GetMapping("/{id}")
-    public RestResponse<Optional<CategoryResponse>> getCategoryById(@PathVariable Long id) {
+    public RestResponse<EntityModel<CategoryResponse>> getCategoryById(@PathVariable Long id) {
         return new RestResponse<>("SUCCESS",
                 String.valueOf(HttpStatus.OK),
                 "BRANDCAR ID: " + id + " SUCCESSFULLY READED",
-                categoryService.getCategoryById(id));
+                categoryHateoasConfig.toModel(categoryService.getCategoryById(id)));
     }
 
     @PostMapping

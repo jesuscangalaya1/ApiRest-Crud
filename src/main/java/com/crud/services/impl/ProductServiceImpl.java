@@ -34,10 +34,10 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Optional<ProductResponse> getProductById(Long id) {
+    public ProductResponse getProductById(Long id) {
         ProductEntity entity = productRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("P-400", HttpStatus.BAD_REQUEST, "El Id del Producto no existe " + id));
-        return Optional.of(productMapper.toDto(entity));
+        return productMapper.toDto(entity);
     }
 
     @Override

@@ -31,11 +31,12 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public Optional<CategoryResponse> getCategoryById(Long id) {
-        return Optional.ofNullable(categoryRepository.findById(id)
-                .map(categoryMapper::toDto)
-                .orElseThrow(() -> new BusinessException("P-400", HttpStatus.BAD_REQUEST, "El Id de la Categoria no existe " + id)));
-    }
+    public CategoryResponse getCategoryById(Long id) {
+        CategoryEntity category = categoryRepository.findById(id)
+                .orElseThrow(() -> new BusinessException("P-400", HttpStatus.BAD_REQUEST, "El Id de la Categoria no existe " + id));
+        return categoryMapper.toDto(category);
+
+ }
 
     @Override
     public CategoryResponse createCategory(CategoryRequest categoryRequest) {

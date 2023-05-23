@@ -1,15 +1,22 @@
 package com.crud.controller;
 
+import com.crud.config.hateoas.ProductHateoasConfig;
 import com.crud.dtos.request.ProductRequest;
 import com.crud.dtos.response.ProductResponse;
 import com.crud.dtos.response.RestResponse;
+import com.crud.entities.CategoryEntity;
+import com.crud.entities.ProductEntity;
 import com.crud.services.ProductService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
+
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequiredArgsConstructor
@@ -17,21 +24,28 @@ import java.util.Optional;
 public class ProductController {
 
     private final ProductService productService;
+    private final ProductHateoasConfig productHateoasConfig;
 
     @GetMapping
-    public RestResponse<List<ProductResponse>> listProducts() {
+    public RestResponse<CollectionModel<EntityModel<ProductResponse>>> listProducts() {
+        List<EntityModel<ProductResponse>> productModels = productService.listProducts().stream()
+                .map(productHateoasConfig::toModel).toList();
+
+        CollectionModel<EntityModel<ProductResponse>> collectionModel = CollectionModel.of(productModels)
+                .add(linkTo(methodOn(ProductController.class).listProducts()).withSelfRel());
+
         return new RestResponse<>("SUCCESS",
                 String.valueOf(HttpStatus.OK),
-                "PRODUCT SUCCESSFULLY READED",
-                productService.listProducts());
+                "PRODUCT SUCCESSFULLY READED", collectionModel);
     }
 
+
     @GetMapping("/{id}")
-    public RestResponse<Optional<ProductResponse>> getProductById(@PathVariable Long id) {
+    public RestResponse<EntityModel<ProductResponse>> getProductById(@PathVariable Long id) {
         return new RestResponse<>("SUCCESS",
                 String.valueOf(HttpStatus.OK),
                 "PRODUCT ID: " + id + " SUCCESSFULLY READED",
-                productService.getProductById(id));
+                productHateoasConfig.toModel(productService.getProductById(id)));
     }
 
     @PostMapping
