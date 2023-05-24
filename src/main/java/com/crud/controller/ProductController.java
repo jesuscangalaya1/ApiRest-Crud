@@ -2,21 +2,15 @@ package com.crud.controller;
 
 import com.crud.config.hateoas.ProductHateoasConfig;
 import com.crud.dtos.request.ProductRequest;
+import com.crud.dtos.response.PageableResponse;
 import com.crud.dtos.response.ProductResponse;
 import com.crud.dtos.response.RestResponse;
-import com.crud.entities.CategoryEntity;
-import com.crud.entities.ProductEntity;
 import com.crud.services.ProductService;
+import com.crud.util.AppConstants;
 import lombok.RequiredArgsConstructor;
-import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
-
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -26,19 +20,20 @@ public class ProductController {
     private final ProductService productService;
     private final ProductHateoasConfig productHateoasConfig;
 
+
     @GetMapping
-    public RestResponse<CollectionModel<EntityModel<ProductResponse>>> listProducts() {
-        List<EntityModel<ProductResponse>> productModels = productService.listProducts().stream()
-                .map(productHateoasConfig::toModel).toList();
+    public  RestResponse<PageableResponse<ProductResponse>> pageableProducts(
+            @RequestParam(value = "pageNo", defaultValue = AppConstants.NUMERO_DE_PAGINA_POR_DEFECTO, required = false) int numeroDePagina,
+            @RequestParam(value = "pageSize", defaultValue = AppConstants.MEDIDA_DE_PAGINA_POR_DEFECTO, required = false) int medidaDePagina,
+            @RequestParam(value = "sortBy", defaultValue = AppConstants.ORDENAR_POR_DEFECTO, required = false) String ordenarPor,
+            @RequestParam(value = "sortDir", defaultValue = AppConstants.ORDENAR_DIRECCION_POR_DEFECTO, required = false) String sortDir) {
 
-        CollectionModel<EntityModel<ProductResponse>> collectionModel = CollectionModel.of(productModels)
-                .add(linkTo(methodOn(ProductController.class).listProducts()).withSelfRel());
-
-        return new RestResponse<>("SUCCESS",
+        return new  RestResponse<>("SUCCESS",
                 String.valueOf(HttpStatus.OK),
-                "PRODUCT SUCCESSFULLY READED", collectionModel);
-    }
+                "PRODUCT SUCCESSFULLY READED",
+                productService.pageableProducts(numeroDePagina, medidaDePagina, ordenarPor, sortDir));
 
+    }
 
     @GetMapping("/{id}")
     public RestResponse<EntityModel<ProductResponse>> getProductById(@PathVariable Long id) {

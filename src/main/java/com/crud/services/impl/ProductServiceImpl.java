@@ -1,6 +1,7 @@
 package com.crud.services.impl;
 
 import com.crud.dtos.request.ProductRequest;
+import com.crud.dtos.response.PageableResponse;
 import com.crud.dtos.response.ProductResponse;
 import com.crud.entities.CategoryEntity;
 import com.crud.entities.ProductEntity;
@@ -10,6 +11,10 @@ import com.crud.repositories.CategoryRepository;
 import com.crud.repositories.ProductRepository;
 import com.crud.services.ProductService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -31,6 +36,27 @@ public class ProductServiceImpl implements ProductService {
                 .filter(list -> !list.isEmpty())
                 .map(productMapper::productsToProductDtos)
                 .orElseThrow(() -> new BusinessException("P-204", HttpStatus.NO_CONTENT, "Lista Vacia de Productos"));
+    }
+
+    @Override
+    public PageableResponse<ProductResponse> pageableProducts(int numeroDePagina, int medidaDePagina, String ordenarPor, String sortDir) {
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name()) ? Sort.by(ordenarPor).ascending()
+                : Sort.by(ordenarPor).descending();
+        Pageable pageable = PageRequest.of(numeroDePagina, medidaDePagina, sort);
+
+        Page<ProductEntity> publicaciones = productRepository.findAll(pageable);
+
+        List<ProductEntity> listaDePublicaciones = publicaciones.getContent();
+        List<ProductResponse> contenido = listaDePublicaciones.stream().map(productMapper::toDto).toList();
+
+        PageableResponse<ProductResponse> publicacionRespuesta = new PageableResponse<>();
+        publicacionRespuesta.setContent(contenido);
+        publicacionRespuesta.setPageNumber(publicaciones.getNumber());
+        publicacionRespuesta.setPageSize(publicaciones.getSize());
+        publicacionRespuesta.setTotalElements(publicaciones.getTotalElements());
+        publicacionRespuesta.setTotalPages(publicaciones.getTotalPages());
+        publicacionRespuesta.setLast(publicaciones.isLast());
+        return publicacionRespuesta;
     }
 
     @Override
