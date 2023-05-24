@@ -9,6 +9,7 @@ import com.crud.util.AppConstants;
 import lombok.RequiredArgsConstructor;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.hateoas.CollectionModel;
 
@@ -27,7 +28,7 @@ public class CategoryController {
     private final CategoryService categoryService;
     private final CategoryHateoasConfig categoryHateoasConfig;
 
-    @GetMapping
+    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public RestResponse<CollectionModel<EntityModel<CategoryResponse>>> listCategories() {
         List<EntityModel<CategoryResponse>> categoryModels = categoryService.listCategories().stream()
                 .map(categoryHateoasConfig::toModel).toList();
@@ -40,7 +41,7 @@ public class CategoryController {
                 "CATEGORIES SUCCESSFULLY READED", collectionModel);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping(value ="/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     public RestResponse<EntityModel<CategoryResponse>> getCategoryById(@PathVariable Long id) {
         return new RestResponse<>(AppConstants.SUCCESS,
                 String.valueOf(HttpStatus.OK),
@@ -48,7 +49,7 @@ public class CategoryController {
                 categoryHateoasConfig.toModel(categoryService.getCategoryById(id)));
     }
 
-    @PostMapping
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     public RestResponse<EntityModel<CategoryResponse>> createCategory(@RequestBody CategoryRequest categoryRequest) {
         return new RestResponse<>(AppConstants.SUCCESS,
                 String.valueOf(HttpStatus.CREATED),
@@ -56,7 +57,7 @@ public class CategoryController {
                 categoryHateoasConfig.toModel(categoryService.createCategory(categoryRequest)));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping(value ="/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     public RestResponse<EntityModel<CategoryResponse>> updatedCategory(@PathVariable Long id, @RequestBody CategoryRequest categoryRequest) {
         return new RestResponse<>(AppConstants.SUCCESS,
                 String.valueOf(HttpStatus.OK),

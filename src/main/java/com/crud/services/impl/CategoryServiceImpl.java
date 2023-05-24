@@ -9,8 +9,11 @@ import com.crud.repositories.CategoryRepository;
 import com.crud.services.CategoryService;
 import com.crud.util.AppConstants;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -23,6 +26,8 @@ public class CategoryServiceImpl implements CategoryService {
     private final CategoryMapper categoryMapper;
 
     @Override
+    @Cacheable(value = "Categoria")
+    @Transactional(readOnly = true)
     public List<CategoryResponse> listCategories() {
         List<CategoryEntity> productoEntities = categoryRepository.findAll();
         return Optional.of(productoEntities)
@@ -32,6 +37,8 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    @Cacheable(value = "Categoria")
+    @Transactional(readOnly = true)
     public CategoryResponse getCategoryById(Long id) {
         CategoryEntity category = categoryRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(AppConstants.BAD_REQUEST, HttpStatus.BAD_REQUEST, AppConstants.BAD_REQUEST_CATEGORY + id));
@@ -40,6 +47,8 @@ public class CategoryServiceImpl implements CategoryService {
  }
 
     @Override
+    @CacheEvict(value = "Categoria", allEntries = true)
+    @Transactional
     public CategoryResponse createCategory(CategoryRequest categoryRequest) {
         CategoryEntity categoriaEntity = categoryMapper.toEntity(categoryRequest);
         CategoryEntity savedCategoryEntity = categoryRepository.save(categoriaEntity);
@@ -47,6 +56,8 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    @CacheEvict(value = "Categoria", allEntries = true)
+    @Transactional
     public CategoryResponse updateCategory(Long id, CategoryRequest categoryRequest) {
         CategoryEntity categoriaEntity = categoryRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(AppConstants.BAD_REQUEST, HttpStatus.BAD_REQUEST, AppConstants.BAD_REQUEST_CATEGORY + id));
@@ -57,6 +68,7 @@ public class CategoryServiceImpl implements CategoryService {
 
 
     @Override
+    @Transactional
     public void deleteCategory(Long id) {
         if (!categoryRepository.existsById(id)) {
             throw new BusinessException(AppConstants.BAD_REQUEST, HttpStatus.BAD_REQUEST, AppConstants.BAD_REQUEST_CATEGORY + id);

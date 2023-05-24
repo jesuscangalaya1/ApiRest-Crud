@@ -14,12 +14,15 @@ import com.crud.repositories.ProductRepository;
 import com.crud.services.ProductService;
 import com.crud.util.AppConstants;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
 import java.util.*;
@@ -34,6 +37,7 @@ public class ProductServiceImpl implements ProductService {
     private final ResourceExport resourceExport;
 
     @Override
+    @Transactional(readOnly = true)
     public List<ProductResponse> listProducts() {
         List<ProductEntity> productoEntities = productRepository.findAll();
         return Optional.of(productoEntities)
@@ -43,6 +47,8 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Cacheable(value = "Producto")
+    @Transactional(readOnly = true)
     public PageableResponse<ProductResponse> pageableProducts(int numeroDePagina, int medidaDePagina, String ordenarPor, String sortDir) {
         Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name()) ? Sort.by(ordenarPor).ascending()
                 : Sort.by(ordenarPor).descending();
@@ -68,13 +74,24 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Cacheable(value = "Producto")
+    @Transactional(readOnly = true)
     public ProductResponse getProductById(Long id) {
         ProductEntity entity = productRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(AppConstants.BAD_REQUEST, HttpStatus.BAD_REQUEST, AppConstants.BAD_REQUEST_PRODUCT + id));
         return productMapper.toDto(entity);
     }
 
+/*  // SE PUEDE CONFIGURAR CUANDO ESTA RELACIONADO EN UNA SOLA LOGICA.
+    @Caching(evict = {
+			@CacheEvict(value = "Producto", allEntries = true),
+			@CacheEvict(value = "Categoria", allEntries = true)
+	})
+
+* */
     @Override
+    @CacheEvict(value = "Producto", allEntries = true)
+    @Transactional
     public ProductResponse createProduct(ProductRequest productRequest) {
         CategoryEntity categoriaEntity = categoryRepository.findById(productRequest.getCategoryId())
                 .orElseThrow(() -> new BusinessException(AppConstants.BAD_REQUEST, HttpStatus.BAD_REQUEST, AppConstants.BAD_REQUEST_PRODUCT + productRequest.getCategoryId()));
@@ -85,6 +102,8 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @CacheEvict(value = "Producto", allEntries = true)
+    @Transactional
     public ProductResponse updateProduct(Long id, ProductRequest productRequest) {
         ProductEntity productEntity = productRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(AppConstants.BAD_REQUEST, HttpStatus.BAD_REQUEST, AppConstants.BAD_REQUEST_PRODUCT + id));
@@ -104,6 +123,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional
     public void deleteProduct(Long id) {
         if (!productRepository.existsById(id)) {
             throw new BusinessException(AppConstants.BAD_REQUEST, HttpStatus.BAD_REQUEST, AppConstants.BAD_REQUEST_PRODUCT + id);

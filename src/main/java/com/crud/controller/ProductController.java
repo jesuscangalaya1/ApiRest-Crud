@@ -30,7 +30,7 @@ public class ProductController {
     private final ProductHateoasConfig productHateoasConfig;
 
 
-    @GetMapping
+    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public  RestResponse<PageableResponse<ProductResponse>> pageableProducts(
             @RequestParam(value = "pageNo", defaultValue = AppConstants.NUMERO_DE_PAGINA_POR_DEFECTO, required = false) int numeroDePagina,
             @RequestParam(value = "pageSize", defaultValue = AppConstants.MEDIDA_DE_PAGINA_POR_DEFECTO, required = false) int medidaDePagina,
@@ -44,7 +44,7 @@ public class ProductController {
 
     }
 
-    @GetMapping("/{id}")
+    @GetMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     public RestResponse<EntityModel<ProductResponse>> getProductById(@PathVariable Long id) {
         return new RestResponse<>(AppConstants.SUCCESS,
                 String.valueOf(HttpStatus.OK),
@@ -52,7 +52,7 @@ public class ProductController {
                 productHateoasConfig.toModel(productService.getProductById(id)));
     }
 
-    @PostMapping
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     public RestResponse<EntityModel<ProductResponse>> createProduct(@RequestBody ProductRequest productRequest) {
         return new RestResponse<>(AppConstants.SUCCESS,
                 String.valueOf(HttpStatus.CREATED),
@@ -60,7 +60,7 @@ public class ProductController {
                 productHateoasConfig.toModel(productService.createProduct(productRequest)));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     public RestResponse<EntityModel<ProductResponse>> updatedProduct(@PathVariable Long id, @RequestBody ProductRequest productRequest) {
         return new RestResponse<>(AppConstants.SUCCESS,
                 String.valueOf(HttpStatus.OK),
