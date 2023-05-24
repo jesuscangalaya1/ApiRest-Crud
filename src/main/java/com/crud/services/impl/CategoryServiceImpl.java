@@ -7,6 +7,7 @@ import com.crud.exceptions.BusinessException;
 import com.crud.mapper.CategoryMapper;
 import com.crud.repositories.CategoryRepository;
 import com.crud.services.CategoryService;
+import com.crud.util.AppConstants;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -27,13 +28,13 @@ public class CategoryServiceImpl implements CategoryService {
         return Optional.of(productoEntities)
                 .filter(list -> !list.isEmpty())
                 .map(categoryMapper::categoryListToCategoryDtoList)
-                .orElseThrow(() -> new BusinessException("P-204", HttpStatus.NO_CONTENT, "Lista Vacia de Productos"));
+                .orElseThrow(() -> new BusinessException("P-204", HttpStatus.NO_CONTENT, "Lista Vaciá de Productos"));
     }
 
     @Override
     public CategoryResponse getCategoryById(Long id) {
         CategoryEntity category = categoryRepository.findById(id)
-                .orElseThrow(() -> new BusinessException("P-400", HttpStatus.BAD_REQUEST, "El Id de la Categoria no existe " + id));
+                .orElseThrow(() -> new BusinessException(AppConstants.BAD_REQUEST, HttpStatus.BAD_REQUEST, AppConstants.BAD_REQUEST_CATEGORY + id));
         return categoryMapper.toDto(category);
 
  }
@@ -48,7 +49,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public CategoryResponse updateCategory(Long id, CategoryRequest categoryRequest) {
         CategoryEntity categoriaEntity = categoryRepository.findById(id)
-                .orElseThrow(() -> new BusinessException("P-400", HttpStatus.BAD_REQUEST, "El Id de la Categoria no existe " + id));
+                .orElseThrow(() -> new BusinessException(AppConstants.BAD_REQUEST, HttpStatus.BAD_REQUEST, AppConstants.BAD_REQUEST_CATEGORY + id));
         categoryMapper.updateCategoryFromDto(categoryRequest, categoriaEntity);
         categoriaEntity = categoryRepository.save(categoriaEntity);
         return categoryMapper.toDto(categoriaEntity);
@@ -58,7 +59,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public void deleteCategory(Long id) {
         if (!categoryRepository.existsById(id)) {
-            throw new BusinessException("P-400", HttpStatus.BAD_REQUEST, "El Id de la categoria no existe " + id);
+            throw new BusinessException(AppConstants.BAD_REQUEST, HttpStatus.BAD_REQUEST, AppConstants.BAD_REQUEST_CATEGORY + id);
         }
         categoryRepository.deleteById(id);
     }

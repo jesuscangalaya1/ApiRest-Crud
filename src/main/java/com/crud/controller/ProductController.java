@@ -9,8 +9,17 @@ import com.crud.services.ProductService;
 import com.crud.util.AppConstants;
 import lombok.RequiredArgsConstructor;
 import org.springframework.hateoas.EntityModel;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+
+import javax.validation.constraints.NotBlank;
+import java.io.File;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -28,7 +37,7 @@ public class ProductController {
             @RequestParam(value = "sortBy", defaultValue = AppConstants.ORDENAR_POR_DEFECTO, required = false) String ordenarPor,
             @RequestParam(value = "sortDir", defaultValue = AppConstants.ORDENAR_DIRECCION_POR_DEFECTO, required = false) String sortDir) {
 
-        return new  RestResponse<>("SUCCESS",
+        return new  RestResponse<>(AppConstants.SUCCESS,
                 String.valueOf(HttpStatus.OK),
                 "PRODUCT SUCCESSFULLY READED",
                 productService.pageableProducts(numeroDePagina, medidaDePagina, ordenarPor, sortDir));
@@ -37,35 +46,57 @@ public class ProductController {
 
     @GetMapping("/{id}")
     public RestResponse<EntityModel<ProductResponse>> getProductById(@PathVariable Long id) {
-        return new RestResponse<>("SUCCESS",
+        return new RestResponse<>(AppConstants.SUCCESS,
                 String.valueOf(HttpStatus.OK),
-                "PRODUCT ID: " + id + " SUCCESSFULLY READED",
+                AppConstants.MESSAGE_ID_PRODUCT + id + " SUCCESSFULLY READED",
                 productHateoasConfig.toModel(productService.getProductById(id)));
     }
 
     @PostMapping
-    public RestResponse<ProductResponse> createProduct(@RequestBody ProductRequest productRequest) {
-        return new RestResponse<>("SUCCESS",
+    public RestResponse<EntityModel<ProductResponse>> createProduct(@RequestBody ProductRequest productRequest) {
+        return new RestResponse<>(AppConstants.SUCCESS,
                 String.valueOf(HttpStatus.CREATED),
                 "PRODUCT SUCCESSFULLY CREATED",
-                productService.createProduct(productRequest));
+                productHateoasConfig.toModel(productService.createProduct(productRequest)));
     }
 
     @PutMapping("/{id}")
-    public RestResponse<ProductResponse> updatedProduct(@PathVariable Long id, @RequestBody ProductRequest productRequest) {
-        return new RestResponse<>("SUCCESS",
+    public RestResponse<EntityModel<ProductResponse>> updatedProduct(@PathVariable Long id, @RequestBody ProductRequest productRequest) {
+        return new RestResponse<>(AppConstants.SUCCESS,
                 String.valueOf(HttpStatus.OK),
-                "PRODUCT ID: " + id + " SUCCESSFULLY UPDATED",
-                productService.updateProduct(id, productRequest));
+                AppConstants.MESSAGE_ID_PRODUCT + id + " SUCCESSFULLY UPDATED",
+                productHateoasConfig.toModel(productService.updateProduct(id, productRequest)));
     }
 
     @DeleteMapping("/{id}")
     public RestResponse<String> deleteProduct(@PathVariable Long id) {
         productService.deleteProduct(id);
-        return new RestResponse<>("SUCCESS",
+        return new RestResponse<>(AppConstants.SUCCESS,
                 String.valueOf(HttpStatus.OK),
-                "PRODUCT ID: " + id + " SUCCESSFULLY DELETED",
+                AppConstants.MESSAGE_ID_PRODUCT + id + " SUCCESSFULLY DELETED",
                 "null"); // Data null.
     }
+
+    @GetMapping("/export-excel")
+    public ResponseEntity<Resource> getExportDataExcel(@RequestParam(value = "pageNo", defaultValue = AppConstants.NUMERO_DE_PAGINA_POR_DEFECTO, required = false) int numeroDePagina,
+                                                       @RequestParam(value = "pageSize", defaultValue = AppConstants.MEDIDA_DE_PAGINA_POR_DEFECTO, required = false) int medidaDePagina,
+                                                       @RequestParam(value = "sortBy", defaultValue = AppConstants.ORDENAR_POR_DEFECTO, required = false) String ordenarPor,
+                                                       @RequestParam(value = "sortDir", defaultValue = AppConstants.ORDENAR_DIRECCION_POR_DEFECTO, required = false) String sortDir,
+                                                       @RequestParam(defaultValue = AppConstants.FORMATO_EXCEL_ABREVIATURA) @NotBlank String format) throws Exception {
+        PageableResponse<ProductResponse> productPage = productService.pageableProducts(numeroDePagina, medidaDePagina, ordenarPor, sortDir);
+        List<ProductResponse> products = productPage.getContent();
+        File file = productService.exportDataExcel(products, format);
+
+        // Configurar las cabeceras de la respuesta HTTP
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDispositionFormData("attachment", file.getName());
+
+        // Crear la respuesta HTTP con el objeto File
+        FileSystemResource fileResource = new FileSystemResource(file);
+        return new ResponseEntity<>(fileResource, headers, HttpStatus.OK);
+    }
+
+
 
 }
