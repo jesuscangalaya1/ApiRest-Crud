@@ -7,6 +7,7 @@ import com.crud.dtos.response.ProductResponse;
 import com.crud.dtos.response.RestResponse;
 import com.crud.services.ProductService;
 import com.crud.util.AppConstants;
+import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpHeaders;
@@ -16,9 +17,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.constraints.NotBlank;
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -97,6 +100,50 @@ public class ProductController {
         return new ResponseEntity<>(fileResource, headers, HttpStatus.OK);
     }
 
+    @PostMapping(value = "/create-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public RestResponse<EntityModel<ProductResponse>> createProductImage(
+            @ApiParam(value = "Image file")
+            @RequestParam(value = "image", required = false) MultipartFile image,
+            @RequestParam("name") String name,
+            @RequestParam("price") Double price,
+            @RequestParam("description") String description,
+            @RequestParam("categoryId") Long categoryId
+    ) throws IOException {
+        return new RestResponse<>(AppConstants.SUCCESS,
+                String.valueOf(HttpStatus.CREATED),
+                "PRODUCT SUCCESSFULLY CREATED",
+                productHateoasConfig.toModel(productService.createProductImage(image, name, price, description, categoryId)));
+    }
 
+    @PutMapping(value = "/update-image/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public RestResponse<EntityModel<ProductResponse>> updatedProductImage(
+            @PathVariable Long id,
+            @ApiParam(value = "Image file")
+            @RequestParam(value = "image", required = false) MultipartFile image,
+            @RequestParam("name") String name,
+            @RequestParam("price") Double price,
+            @RequestParam("description") String description,
+            @RequestParam("categoryId") Long categoryId
+    ) throws IOException {
 
+        return new RestResponse<>(AppConstants.SUCCESS,
+                String.valueOf(HttpStatus.OK),
+                AppConstants.MESSAGE_ID_PRODUCT + id + " SUCCESSFULLY UPDATED",
+                productHateoasConfig.toModel(productService.updatedProductImage(id,image, name, price, description, categoryId)));
+    }
+
+    @GetMapping("/upload-img/{id}")
+    public ResponseEntity<Resource> viewImage(@PathVariable Long id){
+        return ResponseEntity.ok()
+                .contentType(MediaType.IMAGE_JPEG)
+                .body(productService.getProductImage(id));
+    }
 }
+
+
+
+
+
+
+
+

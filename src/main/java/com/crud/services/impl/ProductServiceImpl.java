@@ -16,6 +16,8 @@ import com.crud.util.AppConstants;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -23,8 +25,11 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.persistence.EntityNotFoundException;
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 @Service
@@ -35,6 +40,95 @@ public class ProductServiceImpl implements ProductService {
     private final CategoryRepository categoryRepository;
     private final ProductMapper productMapper;
     private final ResourceExport resourceExport;
+
+    //Image
+    @Override
+    @Transactional
+    public ProductResponse createProductImage(MultipartFile image, String name, Double price,
+                                              String description, Long categoryId) throws IOException {
+
+        byte[] imageBytes = extractImageBytes(image);
+
+
+        ProductRequest productRequest = new ProductRequest();
+        productRequest.setName(name);
+        productRequest.setPrice(price);
+        productRequest.setDescription(description);
+        productRequest.setCategoryId(categoryId);
+
+        ProductEntity productEntity = productMapper.toEntity(productRequest);
+
+        CategoryEntity categoryEntity = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new BusinessException(AppConstants.BAD_REQUEST, HttpStatus.BAD_REQUEST, AppConstants.BAD_REQUEST_CATEGORY + categoryId));
+        productEntity.setCategory(categoryEntity);
+
+        setProductImage(productEntity, imageBytes);
+
+        ProductEntity savedProductEntity = productRepository.save(productEntity);
+        return productMapper.toDto(savedProductEntity);
+    }
+
+    private byte[] extractImageBytes(MultipartFile image) throws IOException {
+        if (image != null && !image.isEmpty()) {
+            // Verificar si se proporcionó una imagen y no está vacía
+            if (!image.getContentType().startsWith("image/")) {
+                throw new IllegalArgumentException("Invalid image file format");
+            }
+
+            return image.getBytes();
+        }
+
+        return null;
+    }
+
+
+
+    @Override
+    @Transactional
+    public ProductResponse updatedProductImage(Long id, MultipartFile image, String name, Double price,
+                                               String description, Long categoryId) throws IOException {
+        ProductEntity productEntity = productRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(AppConstants.BAD_REQUEST, HttpStatus.BAD_REQUEST, AppConstants.BAD_REQUEST_PRODUCT + id));
+
+        byte[] imageBytes = extractImageBytes(image);
+
+        ProductRequest productRequest = new ProductRequest();
+        productRequest.setName(name);
+        productRequest.setPrice(price);
+        productRequest.setDescription(description);
+        productRequest.setCategoryId(categoryId);
+
+        productMapper.updateProductFromDto(productRequest, productEntity);
+        setProductImage(productEntity, imageBytes);
+
+        CategoryEntity categoryEntity = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new BusinessException(AppConstants.BAD_REQUEST, HttpStatus.BAD_REQUEST, AppConstants.BAD_REQUEST_CATEGORY + categoryId));
+        productEntity.setCategory(categoryEntity);
+
+        return productMapper.toDto(productRepository.save(productEntity));
+    }
+
+    private void setProductImage(ProductEntity productEntity, byte[] imageBytes) {
+        if (imageBytes != null) {
+            productEntity.setImage(imageBytes);
+        } else {
+            productEntity.setImage(null);
+        }
+    }
+
+
+
+    //Image
+    @Override
+    public Resource getProductImage(Long id) {
+        Optional<ProductEntity> optionalProductEntity = productRepository.findById(id);
+        if (optionalProductEntity.isEmpty() || optionalProductEntity.get().getImage() == null) {
+            throw new BusinessException("Image no encontrada con el ID: " + id, HttpStatus.NOT_FOUND, "Image not found");
+        }
+
+        byte[] imageBytes = optionalProductEntity.get().getImage();
+        return new ByteArrayResource(imageBytes);
+    }
 
     @Override
     @Transactional(readOnly = true)
@@ -89,6 +183,8 @@ public class ProductServiceImpl implements ProductService {
 	})
 
 * */
+
+    //Crear sin image
     @Override
     @CacheEvict(value = "Producto", allEntries = true)
     @Transactional
@@ -101,6 +197,7 @@ public class ProductServiceImpl implements ProductService {
         return productMapper.toDto(savedProductEntity);
     }
 
+    //Actualizar sin image
     @Override
     @CacheEvict(value = "Producto", allEntries = true)
     @Transactional

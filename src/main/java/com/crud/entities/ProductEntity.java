@@ -1,5 +1,7 @@
 package com.crud.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.util.Arrays;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -31,6 +33,18 @@ public class ProductEntity {
 
     @Column(columnDefinition = "BOOLEAN NOT NULL DEFAULT '0'")
     private boolean deleted;
+
+
+    @Lob
+    @JsonIgnore
+    private byte[] image;
+    @Transient
+    private Integer imageHashCode;
+
+    public Integer getImageHashCode(){
+        return (this.image != null) ? Arrays.hashCode(this.image) : null;
+    }
+
 
 
 }

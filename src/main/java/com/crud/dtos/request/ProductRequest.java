@@ -11,4 +11,7 @@ public class ProductRequest {
     private Double price;
     private String description;
     private Long categoryId;
+
+
+
 }

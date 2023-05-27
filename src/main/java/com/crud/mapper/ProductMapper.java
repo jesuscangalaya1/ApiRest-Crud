@@ -13,10 +13,13 @@ import java.util.List;
 public interface ProductMapper {
 
     @Mapping(source = "category.id", target = "category.id")
+    @Mapping(source = "imageHashCode", target = "image")
     ProductResponse toDto(ProductEntity productEntity);
 
     @Mapping(source = "categoryId", target = "category.id")
+    @Mapping(target = "image", ignore = true)
     ProductEntity toEntity(ProductRequest productRequest);
+
 
     // UpdateProduct
     @Mapping(target = "id", ignore = true)

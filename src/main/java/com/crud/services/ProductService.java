@@ -3,9 +3,13 @@ package com.crud.services;
 import com.crud.dtos.request.ProductRequest;
 import com.crud.dtos.response.PageableResponse;
 import com.crud.dtos.response.ProductResponse;
+import com.crud.entities.ProductEntity;
+import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
 public interface ProductService {
@@ -19,4 +23,8 @@ public interface ProductService {
 
     File exportDataExcel(List<ProductResponse> productResponses, String formato) throws Exception;
 
+    ProductResponse createProductImage(MultipartFile image, String name, Double price, String description, Long categoryId) throws IOException;
+    Resource getProductImage(Long id);
+
+    ProductResponse updatedProductImage(Long id, MultipartFile image, String name, Double price, String description, Long categoryId) throws IOException;
 }
